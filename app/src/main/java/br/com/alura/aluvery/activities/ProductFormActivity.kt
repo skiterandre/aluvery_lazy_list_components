@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
 import androidx.compose.material.Surface
@@ -26,25 +27,34 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import br.com.alura.aluvery.R
+import br.com.alura.aluvery.dao.ProductDao
 import br.com.alura.aluvery.model.Product
 import br.com.alura.aluvery.ui.theme.AluveryTheme
 import coil.compose.AsyncImage
 import java.lang.NumberFormatException
 import java.math.BigDecimal
+import java.text.DecimalFormat
 import javax.security.auth.login.LoginException
 
 class ProductFormActivity : ComponentActivity() {
 
+    private val productDao = ProductDao()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             AluveryTheme {
                 Surface {
-                    ProductFormScreen()
+                    ProductFormScreen(onClickSalvar = {product ->
+                        productDao.save(product)
+                        finish()
+                    })
                 }
             }
         }
@@ -52,7 +62,7 @@ class ProductFormActivity : ComponentActivity() {
 }
 
 @Composable
-fun ProductFormScreen() {
+fun ProductFormScreen(onClickSalvar: (Product) -> Unit = {}) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -87,7 +97,11 @@ fun ProductFormScreen() {
             modifier = Modifier.fillMaxWidth(),
             label = {
                 Text("url")
-            }
+            },
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Uri,
+                imeAction = ImeAction.Next
+            )
         )
 
         var nome by remember {
@@ -100,19 +114,38 @@ fun ProductFormScreen() {
             modifier = Modifier.fillMaxWidth(),
             label = {
                 Text("Nome")
-            })
+            },
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Text,
+                imeAction = ImeAction.Next,
+                capitalization = KeyboardCapitalization.Words
+            ))
 
         var preco by remember {
             mutableStateOf("")
         }
+        val formatter = remember {
+            DecimalFormat("#.##")
+        }
         TextField(value = preco,
             onValueChange = {
-                preco = it
+                try{
+                    preco = formatter.format(BigDecimal(it))
+                }catch (e: IllegalArgumentException){
+                    if(it.isEmpty()){
+                        preco = it
+                    }
+                }
             },
             modifier = Modifier.fillMaxWidth(),
             label = {
                 Text("Preço")
-            })
+            },
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Decimal,
+                imeAction = ImeAction.Next
+            )
+        )
 
         var descricao by remember {
             mutableStateOf("")
@@ -126,7 +159,11 @@ fun ProductFormScreen() {
                 .heightIn(min = 100.dp),
             label = {
                 Text("Descrição")
-            })
+            },
+            keyboardOptions = KeyboardOptions(
+                capitalization = KeyboardCapitalization.Sentences
+            )
+        )
 
         Button(
             onClick = {
@@ -141,6 +178,7 @@ fun ProductFormScreen() {
                     price = convertedPrice,
                     description = descricao
                 )
+                onClickSalvar.invoke(product)
                 Log.i("ProductFormActivity", "ProductForm: $product")
             },
             modifier = Modifier.fillMaxWidth()
