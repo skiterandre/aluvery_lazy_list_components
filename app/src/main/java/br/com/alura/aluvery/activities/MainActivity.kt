@@ -16,46 +16,41 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import br.com.alura.aluvery.dao.ProductDao
-import br.com.alura.aluvery.sampledata.sampleCandies
-import br.com.alura.aluvery.sampledata.sampleDrinks
 import br.com.alura.aluvery.sampledata.sampleSections
 import br.com.alura.aluvery.ui.screens.HomeScreen
+import br.com.alura.aluvery.ui.screens.stateholdes.HomeScreenUiStateHolder
 import br.com.alura.aluvery.ui.theme.AluveryTheme
 
 class MainActivity : ComponentActivity() {
 
-    private val productDao:ProductDao = ProductDao()
+    private val productDao: ProductDao = ProductDao()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             App(fabClick = {
-                startActivity(Intent (this, ProductFormActivity::class.java))
-            }){
-                val section = mapOf(
-                    "Todos os Produtos" to productDao.products(),
-                    "Promoções" to sampleDrinks + sampleCandies,
-                    "Doces" to sampleCandies,
-                    "Bebidas" to sampleDrinks
-                )
-                HomeScreen(
-                    section
-                )
+                startActivity(Intent(this, ProductFormActivity::class.java))
+            }) {
+                val products = productDao.products()
+                HomeScreen(products = products)
             }
         }
     }
 }
 
 @Composable
-fun App(fabClick:() -> Unit = {},  content: @Composable () -> Unit = {}
+fun App(
+    fabClick: () -> Unit = {}, content: @Composable () -> Unit = {}
 ) {
     AluveryTheme {
         Surface {
             Scaffold(floatingActionButton = {
                 FloatingActionButton(onClick = fabClick) {
-                    Icon(imageVector = Icons.Default.Add,
-                        contentDescription = null)
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = null
+                    )
                 }
-            }) {paddingValues ->
+            }) { paddingValues ->
                 Box(modifier = Modifier.padding(paddingValues)) {
                     content()
                 }
@@ -69,6 +64,10 @@ fun App(fabClick:() -> Unit = {},  content: @Composable () -> Unit = {}
 fun AppPreview() {
 
     App {
-        HomeScreen(sections = sampleSections)
+        HomeScreen(
+            HomeScreenUiStateHolder(
+                sections = sampleSections
+            )
+        )
     }
 }
